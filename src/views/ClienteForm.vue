@@ -49,6 +49,9 @@
                     >Cadastrar</v-btn
                   >
                 </v-col>
+                <v-snackbar :color="snackbar.color" v-model="snackbar.show" :timeout="snackbar.timeout">
+                  {{ snackbar.message }}
+                </v-snackbar>
               </v-row>
             </v-container>
           </v-form>
@@ -60,6 +63,7 @@
 
 <script>
 import MaterialCard from "../components/MaterialCard.vue";
+import clientesService from "../services/clientesService.ts";
 export default {
   name: "ClienteForm",
   components: {
@@ -71,6 +75,12 @@ export default {
       telefone: "",
       email: "",
     },
+    snackbar: {
+      show: false,
+      message: null,
+      color: null,
+      timeout: 2000,
+    },
     inputRules: [
       (v) => !!v || "O campo é obrigatório",
       (v) => (v && v.length >= 3) || "Tamanho minimo são 3 caracteres",
@@ -81,6 +91,30 @@ export default {
     cadastrar() {
       if (this.$refs.form.validate()) {
         console.log(this.form);
+        const obj = {
+          nome: this.form.nome,
+          email: this.form.email,
+          telefone: this.form.telefone,
+        };
+        clientesService
+          .createCliente(obj)
+          .then((res) => {
+            this.snackbar = {
+              message: "Cadastrado com sucesso",
+              color: "success",
+              show: true,
+              timeout: 2000
+            };
+            this.$router.push("/clientes");
+          })
+          .catch(() => {
+            this.snackbar = {
+              message: "Erro ao cadastrar",
+              color: "error",
+              show: true,
+              timeout: 2000,
+            };
+          });
       }
     },
     limpar() {
@@ -89,7 +123,7 @@ export default {
         telefone: "",
         email: "",
       };
-      this.$refs.form.reset()
+      this.$refs.form.reset();
     },
   },
 };

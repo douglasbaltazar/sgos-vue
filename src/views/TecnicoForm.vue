@@ -59,6 +59,13 @@
                     >Cadastrar</v-btn
                   >
                 </v-col>
+                <v-snackbar
+                  :color="snackbar.color"
+                  v-model="snackbar.show"
+                  :timeout="snackbar.timeout"
+                >
+                  {{ snackbar.message }}
+                </v-snackbar>
               </v-row>
             </v-container>
           </v-form>
@@ -70,6 +77,7 @@
 
 <script>
 import MaterialCard from "../components/MaterialCard.vue";
+import tecnicosService from '../services/tecnicosService.ts'
 export default {
   name: "TecnicoForm",
   components: {
@@ -80,21 +88,49 @@ export default {
       nome: "",
       telefone: "",
       email: "",
-      numAtendimentos: '',
+      numAtendimentos: "",
+    },
+    snackbar: {
+      show: false,
+      message: null,
+      color: null,
+      timeout: 2000,
     },
     inputRules: [
       (v) => !!v || "O campo é obrigatório",
       (v) => (v && v.length >= 3) || "Tamanho minimo são 3 caracteres",
       (v) => (v && v.length < 50) || "O tamanho maximo são 50 caracteres.",
     ],
-    atendimentoRules: [
-        (v) => (!!v && v !== 0) || "O campo é obrigatório"
-    ]
+    atendimentoRules: [(v) => (!!v && v !== 0) || "O campo é obrigatório"],
   }),
   methods: {
-    cadastrar() {
+    async cadastrar() {
       if (this.$refs.form.validate()) {
-        console.log(this.form);
+        const obj = {
+          nome: this.form.nome,
+          email: this.form.email,
+          telefone: this.form.telefone,
+          numAtendimentos: parseInt(this.form.numAtendimentos)
+        }
+        console.log(obj)
+        await tecnicosService.createTecnico(obj)
+          .then((res) => {
+            this.snackbar = {
+              message: "Cadastrado com sucesso",
+              color: "success",
+              show: true,
+              timeout: 2000
+            };
+            this.$router.push('/tecnicos')
+          })
+          .catch(() => {
+            this.snackbar = {
+              message: "Erro ao cadastrar",
+              color: "error",
+              show: true,
+              timeout: 2000,
+            }
+          })
       }
     },
     limpar() {
@@ -102,9 +138,9 @@ export default {
         nome: "",
         telefone: "",
         email: "",
-        numAtendimentos: '',
+        numAtendimentos: "",
       };
-      this.$refs.form.reset()
+      this.$refs.form.reset();
     },
   },
 };

@@ -124,10 +124,10 @@
     </template>
     <template v-slot:no-data>
       <v-btn
-        color="primary"
-        @click="initialize"
+        color="error"
+        @click="pegarPedidos"
       >
-        Reset
+        Tentar novamente
       </v-btn>
     </template>
   </v-data-table>
@@ -138,6 +138,7 @@
 
 <script>
 import MaterialCard from '../components/MaterialCard.vue'
+import servicosService from '../services/servicosService.ts'
 export default {
     name: 'servicos',
     components: {
@@ -150,9 +151,9 @@ export default {
         {
           text: 'Empresa',
           align: 'start',
-          value: 'name',
+          value: 'cliente.nome',
         },
-        { text: 'Tecnico', value: 'tecnico', sortable: false },
+        { text: 'Tecnico', value: 'tecnico.nome', sortable: false },
         { text: 'Tipo', value: 'tipo', sortable: false },
         { text: 'Status', value: 'status', sortable: false },
         { text: 'Prioridade', value: 'prioridade' },
@@ -187,11 +188,16 @@ export default {
       },
     },
 
-    created () {
-      this.initialize()
+    async created () {
+      this.pegarPedidos();
     },
 
     methods: {
+      async pegarPedidos() {
+        servicosService.getServicos().then((response) => {
+          this.servicos = response.data
+        })
+      },
       initialize () {
         this.servicos = [
           {

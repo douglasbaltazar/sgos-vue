@@ -18,7 +18,7 @@
 
         <p class="subheading font-weight-regular">
           Sistema Gerenciador de Ordens de Serviço!
-          <br>Para contar por favor ir ao meu
+          <br>Para contato por favor ir ao meu
           <a
             href="https://github.com/douglasbaltazar"
             target="_blank"
