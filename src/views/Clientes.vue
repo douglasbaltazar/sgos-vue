@@ -34,28 +34,33 @@
                 </v-card-title>
 
                 <v-card-text>
-                  <v-container>
-                    <v-row>
-                      <v-col cols="12" sm="12" md="12">
-                        <v-text-field
-                          v-model="editedItem.name"
-                          label="Nome Completo"
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="12" md="12">
-                        <v-text-field
-                          v-model="editedItem.email"
-                          label="E-mail"
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="6" md="5">
-                        <v-text-field
-                          v-model="editedItem.telefone"
-                          label="Telefone"
-                        ></v-text-field>
-                      </v-col>
-                    </v-row>
-                  </v-container>
+                  <v-form ref="form">
+                    <v-container>
+                      <v-row>
+                        <v-col cols="12" sm="12" md="12">
+                          <v-text-field
+                            v-model="editedItem.nome"
+                            :rules="inputRules"
+                            label="Nome Completo"
+                          ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="12" md="12">
+                          <v-text-field
+                            v-model="editedItem.email"
+                            :rules="inputRules"
+                            label="E-mail"
+                          ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="6" md="5">
+                          <v-text-field
+                            v-model="editedItem.telefone"
+                            :rules="inputRules"
+                            label="Telefone"
+                          ></v-text-field>
+                        </v-col>
+                      </v-row>
+                    </v-container>
+                  </v-form>
                 </v-card-text>
 
                 <v-card-actions>
@@ -72,12 +77,12 @@
             <v-dialog v-model="dialogDelete" max-width="500px">
               <v-card>
                 <v-card-title class="headline"
-                  >Are you sure you want to delete this item?</v-card-title
+                  >Quer mesmo deletar esse cliente?</v-card-title
                 >
                 <v-card-actions>
                   <v-spacer></v-spacer>
                   <v-btn color="blue darken-1" text @click="closeDelete"
-                    >Cancel</v-btn
+                    >Cancelar</v-btn
                   >
                   <v-btn color="blue darken-1" text @click="deleteItemConfirm"
                     >OK</v-btn
@@ -104,7 +109,7 @@
 
 <script>
 import MaterialCard from "../components/MaterialCard.vue";
-import clientesService from '../services/clientesService.ts'
+import clientesService from "../services/clientesService.ts";
 export default {
   name: "clientes",
   components: {
@@ -123,15 +128,22 @@ export default {
       { text: "Telefone", value: "telefone", sortable: false },
       { text: "Actions", value: "actions", sortable: false },
     ],
+    inputRules: [
+      (v) => !!v || "O campo é obrigatório",
+      (v) => (v && v.length >= 3) || "Tamanho minimo são 3 caracteres",
+      (v) => (v && v.length < 50) || "O tamanho maximo são 50 caracteres.",
+    ],
     clientes: [],
     editedIndex: -1,
     editedItem: {
-      name: "",
+      id: 0,
+      nome: "",
       email: 0,
       telefone: 0,
     },
     defaultItem: {
-      name: "",
+      id: 0,
+      nome: "",
       email: 0,
       telefone: 0,
     },
@@ -163,61 +175,6 @@ export default {
         console.log(this.clientes);
       });
     },
-    initialize() {
-      this.clientes = [
-        {
-          name: "Douglas",
-          email: "douglasbaltazar1@gmail.com",
-          telefone: "998199161",
-        },
-        {
-          name: "Ice cream sandwich",
-          email: "douglasbaltazar1@gmail.com",
-          telefone: "998199161",
-        },
-        {
-          name: "Eclair",
-          email: "douglasbaltazar1@gmail.com",
-          telefone: "998199161",
-        },
-        {
-          name: "Cupcake",
-          email: "douglasbaltazar1@gmail.com",
-          telefone: "998199161",
-        },
-        {
-          name: "Gingerbread",
-          email: "douglasbaltazar1@gmail.com",
-          telefone: "998199161",
-        },
-        {
-          name: "Jelly bean",
-          email: "douglasbaltazar1@gmail.com",
-          telefone: "998199161",
-        },
-        {
-          name: "Lollipop",
-          email: "douglasbaltazar1@gmail.com",
-          telefone: "998199161",
-        },
-        {
-          name: "Honeycomb",
-          email: "douglasbaltazar1@gmail.com",
-          telefone: "998199161",
-        },
-        {
-          name: "Donut",
-          email: "douglasbaltazar1@gmail.com",
-          telefone: "998199161",
-        },
-        {
-          name: "KitKat",
-          email: "douglasbaltazar1@gmail.com",
-          telefone: "998199161",
-        },
-      ];
-    },
-
     editItem(item) {
       this.editedIndex = this.clientes.indexOf(item);
       this.editedItem = Object.assign({}, item);
@@ -232,6 +189,7 @@ export default {
 
     deleteItemConfirm() {
       this.clientes.splice(this.editedIndex, 1);
+      clientesService.deleteCliente(this.editedItem)
       this.closeDelete();
     },
 
@@ -253,11 +211,16 @@ export default {
 
     save() {
       if (this.editedIndex > -1) {
-        Object.assign(this.clientes[this.editedIndex], this.editedItem);
+        if (this.$refs.form.validate()) {
+          Object.assign(this.clientes[this.editedIndex], this.editedItem);
+          clientesService.editCliente(this.editedItem)
+          this.close();
+        }
       } else {
         this.clientes.push(this.editedItem);
+        this.close();
       }
-      this.close();
+      
     },
   },
 };

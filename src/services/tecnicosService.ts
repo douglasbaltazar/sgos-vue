@@ -4,6 +4,7 @@ const TECNICOS_GET_ALL = 'http://localhost:8081/api/v1/tecnicos';
 const TECNICOS_CREATE = 'http://localhost:8081/api/v1/tecnicos';
 const TECNICOS_GET_DISPONIVEIS = 'http://localhost:8081/api/v1/tecnicos/disponiveis'
 const TECNICO_INCREASE = 'http://localhost:8081/api/v1/tecnicos/aumentar/'
+const TECNICO_EDIT = 'http://localhost:8081/api/v1/tecnicos/'
 const TECNICO_GET_ONE = 'http://localhost:8081/api/v1/tecnicos/'
 
 class TecnicoService {
@@ -21,6 +22,12 @@ class TecnicoService {
     }
     getById(id: any) {
         return axios.get(TECNICO_GET_ONE + `${id}`)
+    }
+    editTecnico(obj: any) {
+        return axios.put(TECNICO_EDIT + `/${obj.id}`, obj)
+    }
+    deleteTecnico(obj: any) {
+        return axios.delete(TECNICO_EDIT + `/${obj.id}`, obj)
     }
 
 }

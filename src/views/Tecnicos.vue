@@ -34,34 +34,40 @@
                 </v-card-title>
 
                 <v-card-text>
-                  <v-container>
-                    <v-row>
-                      <v-col cols="12" sm="12" md="12">
-                        <v-text-field
-                          v-model="editedItem.nome"
-                          label="Nome Completo"
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="12" md="12">
-                        <v-text-field
-                          v-model="editedItem.email"
-                          label="E-mail"
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="6" md="5">
-                        <v-text-field
-                          v-model="editedItem.telefone"
-                          label="Telefone"
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="4" md="4">
-                        <v-text-field
-                          v-model="editedItem.numAtendimentos"
-                          label="Numero Atendimentos"
-                        ></v-text-field>
-                      </v-col>
-                    </v-row>
-                  </v-container>
+                  <v-form ref="form">
+                    <v-container>
+                      <v-row>
+                        <v-col cols="12" sm="12" md="12">
+                          <v-text-field
+                            v-model="editedItem.nome"
+                            label="Nome Completo"
+                            :rules="inputRules"
+                          ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="12" md="12">
+                          <v-text-field
+                            v-model="editedItem.email"
+                            label="E-mail"
+                            :rules="inputRules"
+                          ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="6" md="5">
+                          <v-text-field
+                            v-model="editedItem.telefone"
+                            label="Telefone"
+                            :rules="inputRules"
+                          ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="4" md="4">
+                          <v-text-field
+                            disabled
+                            v-model="editedItem.numAtendimentos"
+                            label="Numero Atendimentos"
+                          ></v-text-field>
+                        </v-col>
+                      </v-row>
+                    </v-container>
+                  </v-form>
                 </v-card-text>
 
                 <v-card-actions>
@@ -78,12 +84,12 @@
             <v-dialog v-model="dialogDelete" max-width="500px">
               <v-card>
                 <v-card-title class="headline"
-                  >Are you sure you want to delete this item?</v-card-title
+                  >Realmente deletar esse Tecnico?</v-card-title
                 >
                 <v-card-actions>
                   <v-spacer></v-spacer>
                   <v-btn color="blue darken-1" text @click="closeDelete"
-                    >Cancel</v-btn
+                    >Cancelar</v-btn
                   >
                   <v-btn color="blue darken-1" text @click="deleteItemConfirm"
                     >OK</v-btn
@@ -109,177 +115,125 @@
 </template>
 
 <script>
-import MaterialCard from '../components/MaterialCard.vue'
-import tecnicosServices from '../services/tecnicosService.ts'
+import MaterialCard from "../components/MaterialCard.vue";
+import tecnicosServices from "../services/tecnicosService.ts";
 export default {
-    name: 'Tecnicos',
-    components: {
-        MaterialCard
+  name: "Tecnicos",
+  components: {
+    MaterialCard,
+  },
+  data: () => ({
+    dialog: false,
+    dialogDelete: false,
+    headers: [
+      {
+        text: "Nome",
+        align: "start",
+        value: "nome",
+      },
+      { text: "Email", value: "email", sortable: false },
+      { text: "Telefone", value: "telefone", sortable: false },
+      { text: "Atendimentos", value: "numAtendimentos" },
+      { text: "Actions", value: "actions", sortable: false },
+    ],
+    inputRules: [
+      (v) => !!v || "O campo é obrigatório",
+      (v) => (v && v.length >= 3) || "Tamanho minimo são 3 caracteres",
+      (v) => (v && v.length < 50) || "O tamanho maximo são 50 caracteres.",
+    ],
+    tecnicos: [],
+    editedIndex: -1,
+    editedItem: {
+      id: 0,
+      nome: "",
+      email: 0,
+      telefone: 0,
+      numAtendimentos: 0,
     },
-    data: () => ({
-      dialog: false,
-      dialogDelete: false,
-      headers: [
-        {
-          text: 'Nome',
-          align: 'start',
-          value: 'nome',
-        },
-        { text: 'Email', value: 'email', sortable: false },
-        { text: 'Telefone', value: 'telefone', sortable: false },
-        { text: 'Atendimentos', value: 'numAtendimentos' },
-        { text: 'Actions', value: 'actions', sortable: false },
-      ],
-      tecnicos: [],
-      editedIndex: -1,
-      editedItem: {
-        nome: '',
-        email: 0,
-        telefone: 0,
-        numAtendimentos: 0,
-      },
-      defaultItem: {
-        nome: '',
-        email: 0,
-        telefone: 0,
-        numAtendimentos: 0,
-      },
-    }),
+    defaultItem: {
+      id: 0, 
+      nome: "",
+      email: 0,
+      telefone: 0,
+      numAtendimentos: 0,
+    },
+  }),
 
-    computed: {
-      formTitle () {
-        return this.editedIndex === -1 ? 'Novo Tecnico' : 'Editar Tecnico'
-      },
+  computed: {
+    formTitle() {
+      return this.editedIndex === -1 ? "Novo Tecnico" : "Editar Tecnico";
+    },
+  },
+
+  watch: {
+    dialog(val) {
+      val || this.close();
+    },
+    dialogDelete(val) {
+      val || this.closeDelete();
+    },
+  },
+
+  created() {
+    this.pegarTecnicos();
+  },
+
+  methods: {
+    async pegarTecnicos() {
+      tecnicosServices.getTecnicos().then((response) => {
+        this.tecnicos = response.data;
+        console.log(this.tecnicos);
+      });
+    },
+    editItem(item) {
+      this.editedIndex = this.tecnicos.indexOf(item);
+      this.editedItem = Object.assign({}, item);
+      this.dialog = true;
     },
 
-    watch: {
-      dialog (val) {
-        val || this.close()
-      },
-      dialogDelete (val) {
-        val || this.closeDelete()
-      },
+    deleteItem(item) {
+      this.editedIndex = this.tecnicos.indexOf(item);
+      this.editedItem = Object.assign({}, item);
+      this.dialogDelete = true;
     },
 
-    created () {
-      this.pegarTecnicos()
+    deleteItemConfirm() {
+      this.tecnicos.splice(this.editedIndex, 1);
+      tecnicosServices.deleteTecnico(this.editedItem)
+      this.closeDelete();
     },
 
-    methods: {
-      async pegarTecnicos() {
-        tecnicosServices.getTecnicos().then((response) => {
-          this.tecnicos = response.data
-          console.log(this.tecnicos)
-        })
-      },
-      initialize () {
-        this.tecnicos = [
-          {
-            nome: 'Douglas',
-            email: 'douglasbaltazar1@gmail.com',
-            telefone: '998199161',
-            numAtendimentos: 2,
-          },
-          {
-            nome: 'Ice cream sandwich',
-            email: 'douglasbaltazar1@gmail.com',
-            telefone: '998199161',
-            numAtendimentos: 37,
-          },
-          {
-            nome: 'Eclair',
-            email: 'douglasbaltazar1@gmail.com',
-            telefone: '998199161',
-            numAtendimentos: 23,
-          },
-          {
-            nome: 'Cupcake',
-            email: 'douglasbaltazar1@gmail.com',
-            telefone: '998199161',
-            numAtendimentos: 67,
-          },
-          {
-            nome: 'Gingerbread',
-            email: 'douglasbaltazar1@gmail.com',
-            telefone: '998199161',
-            numAtendimentos: 49,
-          },
-          {
-            nome: 'Jelly bean',
-            email: 'douglasbaltazar1@gmail.com',
-            telefone: '998199161',
-            numAtendimentos: 94,
-          },
-          {
-            nome: 'Lollipop',
-            email: 'douglasbaltazar1@gmail.com',
-            telefone: '998199161',
-            numAtendimentos: 98,
-          },
-          {
-            nome: 'Honeycomb',
-            email: 'douglasbaltazar1@gmail.com',
-            telefone: '998199161',
-            numAtendimentos: 87,
-          },
-          {
-            nome: 'Donut',
-            email: 'douglasbaltazar1@gmail.com',
-            telefone: '998199161',
-            numAtendimentos: 51,
-          },
-          {
-            nome: 'KitKat',
-            email: 'douglasbaltazar1@gmail.com',
-            telefone: '998199161',
-            numAtendimentos: 65,
-          },
-        ]
-      },
+    close() {
+      this.dialog = false;
+      this.$nextTick(() => {
+        this.editedItem = Object.assign({}, this.defaultItem);
+        this.editedIndex = -1;
+      });
+    },
 
-      editItem (item) {
-        this.editedIndex = this.tecnicos.indexOf(item)
-        this.editedItem = Object.assign({}, item)
-        this.dialog = true
-      },
+    closeDelete() {
+      this.dialogDelete = false;
+      this.$nextTick(() => {
+        this.editedItem = Object.assign({}, this.defaultItem);
+        this.editedIndex = -1;
+      });
+    },
 
-      deleteItem (item) {
-        this.editedIndex = this.tecnicos.indexOf(item)
-        this.editedItem = Object.assign({}, item)
-        this.dialogDelete = true
-      },
-
-      deleteItemConfirm () {
-        this.tecnicos.splice(this.editedIndex, 1)
-        this.closeDelete()
-      },
-
-      close () {
-        this.dialog = false
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedIndex = -1
-        })
-      },
-
-      closeDelete () {
-        this.dialogDelete = false
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedIndex = -1
-        })
-      },
-
-      save () {
-        if (this.editedIndex > -1) {
-          Object.assign(this.tecnicos[this.editedIndex], this.editedItem)
-        } else {
-          this.tecnicos.push(this.editedItem)
+    save() {
+      if (this.editedIndex > -1) {
+        if(this.$refs.form.validate()) {
+          Object.assign(this.tecnicos[this.editedIndex], this.editedItem);
+          tecnicosServices.editTecnico(this.editedItem)
+          this.close();
         }
-        this.close()
-      },
+      } else {
+        this.tecnicos.push(this.editedItem);
+        this.close();
+      }
+      
     },
-}
+  },
+};
 </script>
 
 <style>
